@@ -27,9 +27,9 @@ func (v viewsData) IsStructureEmpty() bool {
 	return reflect.DeepEqual(v, viewsData{})
 }
 
-// Grab filename out of URL
-// Could refactor to write each week's results into a seperate file
-func extractFileName(url string) string {
+// ExtractFileName out of URL
+func ExtractFileName(url string) string {
+	// TODO: Could refactor to write each week's results into a seperate file
 	splitURL := strings.Split(url, "/")
 	extractedFileName := splitURL[len(splitURL)-1]
 	fileName := strings.Replace(extractedFileName, "html", "csv", -1)
@@ -43,7 +43,7 @@ func main() {
 	// Seperate collector to grab weekly results
 	pageCollector := c.Clone()
 
-	fileName := extractFileName(url)
+	fileName := ExtractFileName(url)
 	file, _ := os.Create(fileName)
 	defer file.Close()
 
