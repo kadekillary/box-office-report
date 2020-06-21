@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"io"
 	"os"
 	"reflect"
 	"strings"
@@ -27,6 +28,26 @@ func (v viewsData) IsStructureEmpty() bool {
 	return reflect.DeepEqual(v, viewsData{})
 }
 
+type youtubeData []viewsData
+
+// ToCSV writes data from struct to file
+func (y *youtubeData) ToCSV(w io.Writer) error {
+	writer := csv.NewWriter(w)
+	writer.Write([]string{"Rank", "Film", "WeeklyViews", "TotalViews", "ReleaseDate", "TrailerCount"})
+	for _, m := range *y {
+		writer.Write([]string{
+			m.Rank,
+			m.Film,
+			m.WeeklyViews,
+			m.TotalViews,
+			m.ReleaseDate,
+			m.TrailerCount,
+		})
+	}
+	writer.Flush()
+	return writer.Error()
+}
+
 // ExtractFileName out of URL
 func ExtractFileName(url string) string {
 	// TODO: Could refactor to write each week's results into a seperate file
@@ -47,16 +68,12 @@ func main() {
 	file, _ := os.Create(fileName)
 	defer file.Close()
 
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-	writer.Write([]string{"Rank", "Film", "WeeklyViews", "TotalViews", "ReleaseDate", "TrailerCount"})
-
-	youtubeViews := []viewsData{}
-
 	c.OnHTML("a.hover2", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		pageCollector.Visit(link)
 	})
+
+	youtubeViews := youtubeData{}
 
 	pageCollector.OnHTML("tr", func(e *colly.HTMLElement) {
 		temp := viewsData{}
@@ -75,14 +92,6 @@ func main() {
 
 	c.Visit(url)
 
-	for i := range youtubeViews {
-		writer.Write([]string{
-			youtubeViews[i].Rank,
-			youtubeViews[i].Film,
-			youtubeViews[i].WeeklyViews,
-			youtubeViews[i].TotalViews,
-			youtubeViews[i].ReleaseDate,
-			youtubeViews[i].TrailerCount,
-		})
-	}
+	youtubeViews.ToCSV(file)
+
 }
