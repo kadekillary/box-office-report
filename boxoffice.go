@@ -23,7 +23,7 @@ type viewsData struct {
 	TrailerCount string
 }
 
-// Use to check whether a sturcture is empty or not
+// Use to check whether a structure is empty or not
 func (v viewsData) IsStructureEmpty() bool {
 	return reflect.DeepEqual(v, viewsData{})
 }
@@ -50,7 +50,7 @@ func (y *youtubeData) ToCSV(w io.Writer) error {
 
 // ExtractFileName out of URL
 func ExtractFileName(url string) string {
-	// TODO: Could refactor to write each week's results into a seperate file
+	// TODO: Could refactor to write each week's results into a separate file
 	splitURL := strings.Split(url, "/")
 	extractedFileName := splitURL[len(splitURL)-1]
 	fileName := strings.Replace(extractedFileName, "html", "csv", -1)
@@ -61,7 +61,7 @@ func main() {
 	// Used to extract all weekly result links on homepage
 	c := colly.NewCollector()
 
-	// Seperate collector to grab weekly results
+	// Separate collector to grab weekly results
 	pageCollector := c.Clone()
 
 	fileName := ExtractFileName(url)
