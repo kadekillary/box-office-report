@@ -5,14 +5,13 @@ import (
 	"io"
 	"os"
 	"reflect"
-	"strings"
 
 	"github.com/gocolly/colly"
 )
 
-const (
-	url string = "http://www.boxofficereport.com/trailerviews/trailerviews.html"
-)
+const url string = "http://www.boxofficereport.com/trailerviews/trailerviews.html"
+
+var headers = []string{"Rank", "Film", "WeeklyViews", "TotalViews", "ReleaseDate", "TrailerCount"}
 
 type viewsData struct {
 	Rank         string
@@ -31,9 +30,9 @@ func (v viewsData) IsStructureEmpty() bool {
 type youtubeData []viewsData
 
 // ToCSV writes data from struct to file
-func (y *youtubeData) ToCSV(w io.Writer) error {
+func (y *youtubeData) ToCSV(w io.Writer, headers []string) error {
 	writer := csv.NewWriter(w)
-	writer.Write([]string{"Rank", "Film", "WeeklyViews", "TotalViews", "ReleaseDate", "TrailerCount"})
+	writer.Write(headers)
 	for _, m := range *y {
 		writer.Write([]string{
 			m.Rank,
@@ -46,15 +45,6 @@ func (y *youtubeData) ToCSV(w io.Writer) error {
 	}
 	writer.Flush()
 	return writer.Error()
-}
-
-// ExtractFileName out of URL
-func ExtractFileName(url string) string {
-	// TODO: Could refactor to write each week's results into a separate file
-	splitURL := strings.Split(url, "/")
-	extractedFileName := splitURL[len(splitURL)-1]
-	fileName := strings.Replace(extractedFileName, "html", "csv", -1)
-	return fileName
 }
 
 func main() {
@@ -92,6 +82,6 @@ func main() {
 
 	c.Visit(url)
 
-	youtubeViews.ToCSV(file)
+	youtubeViews.ToCSV(file, headers)
 
 }
