@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/csv"
 	"io"
+	"log"
 	"os"
-	"reflect"
 
 	"github.com/gocolly/colly"
 )
@@ -13,38 +13,20 @@ const url string = "http://www.boxofficereport.com/trailerviews/trailerviews.htm
 
 var headers = []string{"Rank", "Film", "WeeklyViews", "TotalViews", "ReleaseDate", "TrailerCount"}
 
-type viewsData struct {
-	Rank         string
-	Film         string
-	WeeklyViews  string
-	TotalViews   string
-	ReleaseDate  string
-	TrailerCount string
+type youtubeData struct {
+	data [][]string
 }
 
-// Use to check whether a structure is empty or not
-func (v viewsData) IsStructureEmpty() bool {
-	return reflect.DeepEqual(v, viewsData{})
-}
-
-type youtubeData []viewsData
-
-// ToCSV writes data from struct to file
+// ToCSV write results from youtubeData to CSV file
 func (y *youtubeData) ToCSV(w io.Writer, headers []string) error {
 	writer := csv.NewWriter(w)
+	defer writer.Flush()
 	writer.Write(headers)
-	for _, m := range *y {
-		writer.Write([]string{
-			m.Rank,
-			m.Film,
-			m.WeeklyViews,
-			m.TotalViews,
-			m.ReleaseDate,
-			m.TrailerCount,
-		})
+	err := writer.WriteAll(y.data)
+	if err != nil {
+		log.Fatalf("Failed to write data: %s", err)
 	}
-	writer.Flush()
-	return writer.Error()
+	return nil
 }
 
 func main() {
@@ -66,17 +48,17 @@ func main() {
 	youtubeViews := youtubeData{}
 
 	pageCollector.OnHTML("tr", func(e *colly.HTMLElement) {
-		temp := viewsData{}
-		temp.Rank = e.ChildText("td.classname1:nth-of-type(1)")
-		temp.Film = e.ChildText("td.classname1:nth-of-type(2)")
-		temp.WeeklyViews = e.ChildText("td.classname1:nth-of-type(3)")
-		temp.TotalViews = e.ChildText("td.classname1:nth-of-type(4)")
-		temp.ReleaseDate = e.ChildText("td.classname1:nth-of-type(5)")
-		temp.TrailerCount = e.ChildText("td.classname1:nth-of-type(6)")
+		temp := make([]string, 6)
+		temp[0] = e.ChildText("td.classname1:nth-of-type(1)")
+		temp[1] = e.ChildText("td.classname1:nth-of-type(2)")
+		temp[2] = e.ChildText("td.classname1:nth-of-type(3)")
+		temp[3] = e.ChildText("td.classname1:nth-of-type(4)")
+		temp[4] = e.ChildText("td.classname1:nth-of-type(5)")
+		temp[5] = e.ChildText("td.classname1:nth-of-type(6)")
 
-		// Don't write any results where the structure is empty
-		if temp.IsStructureEmpty() != true {
-			youtubeViews = append(youtubeViews, temp)
+		// Ignore empty rows (i.e. any row without a weekly rank)
+		if temp[0] != "" {
+			youtubeViews.data = append(youtubeViews.data, temp)
 		}
 	})
 
